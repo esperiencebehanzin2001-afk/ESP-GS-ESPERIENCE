@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<!--
+  CONSOLE MÈRE — ESP-GS
+  Outil PRIVÉ de BEHANZIN AKOSSIBE ESPERIENCE. Ne JAMAIS distribuer ce
+  fichier à une entreprise cliente : il donne accès à la gestion de
+  TOUTES les entreprises (création de licences, réinitialisation de mots
+  de passe, journal de sécurité). Gardez-le uniquement sur votre poste.
+-->
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Console Mère — ESP-GS</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2129; --border:#2a313c;
+    --ink:#e6edf3; --ink-dim:#8b949e; --gold:#d4a747; --green:#3fb950;
+    --red:#f85149; --orange:#e3934a; --mono:'JetBrains Mono','Consolas',monospace;
+    --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;}
+  header{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:var(--panel);}
+  header h1{font-size:15px;margin:0;font-weight:600;letter-spacing:.02em;}
+  header h1 span{color:var(--gold);}
+  .who{font-size:12px;color:var(--ink-dim);}
+  #app{max-width:1180px;margin:0 auto;padding:28px;}
+  .hidden{display:none !important;}
+
+  /* Login */
+  #loginBox{max-width:360px;margin:80px auto;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:28px;}
+  #loginBox h2{margin-top:0;font-size:16px;}
+  label{display:block;font-size:12px;color:var(--ink-dim);margin-bottom:4px;margin-top:14px;}
+  input,select{width:100%;padding:9px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--ink);font-family:var(--sans);font-size:13.5px;}
+  input:focus,select:focus{outline:none;border-color:var(--gold);}
+  button{cursor:pointer;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;font-family:var(--sans);}
+  .btn-gold{background:var(--gold);color:#1a1300;}
+  .btn-outline{background:transparent;border:1px solid var(--border);color:var(--ink);}
+  .btn-red{background:var(--red);color:#fff;}
+  .btn-sm{padding:6px 11px;font-size:12px;}
+  button:hover{filter:brightness(1.08);}
+  .err{color:var(--red);font-size:12.5px;margin-top:10px;min-height:16px;}
+
+  /* Layout */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:22px;}
+  .tab{padding:10px 16px;font-size:13px;color:var(--ink-dim);cursor:pointer;border-bottom:2px solid transparent;}
+  .tab.active{color:var(--ink);border-bottom-color:var(--gold);}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px;}
+  .panel h3{margin:0 0 14px;font-size:13.5px;color:var(--gold);text-transform:uppercase;letter-spacing:.04em;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;color:var(--ink-dim);font-weight:500;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--border);}
+  td{padding:9px 8px;border-bottom:1px solid var(--border);}
+  tr:last-child td{border-bottom:none;}
+  .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+  .pill.active{background:rgba(63,185,80,.15);color:var(--green);}
+  .pill.suspended{background:rgba(248,81,73,.15);color:var(--red);}
+  .pill.alert{background:rgba(227,147,74,.15);color:var(--orange);}
+  .pill.unlimited{background:rgba(88,166,255,.15);color:#58a6ff;}
+  .pill.expiring_soon{background:rgba(227,147,74,.15);color:var(--orange);}
+  .pill.expired{background:rgba(248,81,73,.15);color:var(--red);}
+  .muted{color:var(--ink-dim);}
+  .mono{font-family:var(--mono);}
+  .row-actions{display:flex;gap:6px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+  .stat{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:14px;}
+  .stat .num{font-size:22px;font-weight:700;font-family:var(--mono);}
+  .stat .lbl{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.03em;margin-top:2px;}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:200;}
+  .modal-bg.show{display:flex;}
+  .modal{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:24px;width:400px;max-width:92vw;}
+  .modal h3{margin-top:0;}
+  .toast{position:fixed;bottom:20px;right:20px;background:var(--panel2);border:1px solid var(--border);border-left:3px solid var(--green);padding:12px 18px;border-radius:6px;font-size:13px;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none;max-width:360px;}
+  .toast.show{opacity:1;transform:translateY(0);}
+  .toast.warn{border-left-color:var(--red);}
+  .copy-box{font-family:var(--mono);background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:15px;letter-spacing:.03em;margin:10px 0;word-break:break-all;}
+  .hint{font-size:11.5px;color:var(--ink-dim);line-height:1.5;}
+  .period-switch{display:flex;gap:6px;margin-bottom:14px;}
+  .period-switch button{background:var(--panel2);color:var(--ink-dim);border:1px solid var(--border);}
+  .period-switch button.active{background:var(--gold);color:#1a1300;border-color:var(--gold);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Console <span>Mère</span> — ESP-GS</h1>
+  <div class="who hidden" id="whoBox">Connecté : <span id="whoName"></span> · <a href="#" id="btnLogout" style="color:var(--ink-dim);">Déconnexion</a></div>
+</header>
+
+<div id="app">
+
+  <div id="loginBox">
+    <h2 id="loginTitle">Connexion administrateur</h2>
+    <p class="hint" id="loginHint">Accès réservé. Cette console permet de gérer toutes les entreprises clientes : ne la partagez jamais.</p>
+    <label>Adresse du serveur</label>
+    <input id="serverUrl" placeholder="https://votre-serveur.exemple.com" value="http://localhost:4000">
+    <button class="btn-outline btn-sm" id="btnCheckServer" style="margin-top:6px;">Vérifier la connexion</button>
+    <div id="checkServerMsg" style="font-size:12px;margin-top:6px;"></div>
+
+    <div id="loginFields">
+      <label>Identifiant</label>
+      <input id="loginUser" placeholder="admin" autocomplete="username">
+      <label>Mot de passe</label>
+      <input id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password">
+      <button class="btn-gold" style="width:100%;margin-top:18px;" id="btnLogin">Se connecter</button>
+    </div>
+
+    <div id="setupFields" class="hidden">
+      <p class="hint" style="color:var(--gold);">Aucun compte administrateur n'existe encore sur ce serveur. Créez-le maintenant — il vous servira à chaque connexion future.</p>
+      <label>Choisissez votre identifiant</label>
+      <input id="setupUser" placeholder="admin" autocomplete="username">
+      <label>Choisissez votre mot de passe (8 caractères minimum)</label>
+      <input id="setupPass" type="password" autocomplete="new-password">
+      <label>Confirmez le mot de passe</label>
+      <input id="setupPass2" type="password" autocomplete="new-password">
+      <button class="btn-gold" style="width:100%;margin-top:18px;" id="btnSetup">Créer mon compte et me connecter</button>
+    </div>
+
+    <div class="err" id="loginErr"></div>
+  </div>
+
+  <div id="mainBox" class="hidden">
+    <div class="tabs">
+      <div class="tab active" data-tab="entreprises">Entreprises</div>
+      <div class="tab" data-tab="securite">Journal de sécurité</div>
+      <div class="tab" data-tab="rapports">Rapports d'activité</div>
+    </div>
+
+    <!-- ENTREPRISES -->
+    <div class="tabpage" id="tab-entreprises">
+      <div class="panel">
+        <h3>Vue d'ensemble</h3>
+        <div class="stat-grid" id="statGrid"></div>
+      </div>
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <h3 style="margin:0;">Entreprises clientes</h3>
+          <button class="btn-gold btn-sm" id="btnNewBiz">+ Nouvelle entreprise</button>
+        </div>
+        <table>
+          <thead><tr><th>Nom</th><th>Licence</th><th>Expiration</th><th>Statut</th><th>Vue la dernière fois</th><th>Alertes 24h</th><th></th></tr></thead>
+          <tbody id="bizTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECURITE -->
+    <div class="tabpage hidden" id="tab-securite">
+      <div class="panel">
+        <h3>Journal de sécurité — toutes entreprises (200 derniers événements)</h3>
+        <table>
+          <thead><tr><th>Date</th><th>Entreprise</th><th>Événement</th><th>Détails</th></tr></thead>
+          <tbody id="secTable"></tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <h3>Demandes de réinitialisation en attente</h3>
+        <table>
+          <thead><tr><th>Date</th><th>Entreprise</th><th></th></tr></thead>
+          <tbody id="pendingTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RAPPORTS -->
+    <div class="tabpage hidden" id="tab-rapports">
+      <div class="panel">
+        <h3>Rapport d'activité par entreprise</h3>
+        <label>Entreprise</label>
+        <select id="reportBizSelect"></select>
+        <div class="period-switch" style="margin-top:14px;">
+          <button class="active" data-period="daily">Journalier</button>
+          <button data-period="weekly">Hebdomadaire</button>
+          <button data-period="monthly">Mensuel</button>
+          <button data-period="annual">Annuel</button>
+        </div>
+        <div id="reportOutput"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: nouvelle entreprise -->
+<div class="modal-bg" id="modalNewBiz">
+  <div class="modal">
+    <h3>Nouvelle entreprise</h3>
+    <label>Nom de l'entreprise</label>
+    <input id="nbName" placeholder="Ex: Boutique Awa SARL">
+    <label>Identifiant du gérant</label>
+    <input id="nbUser" placeholder="Ex: gerant.awa">
+    <label>Durée de la licence</label>
+    <div style="display:flex;gap:8px;">
+      <input id="nbDurationValue" type="number" min="1" step="1" value="1" style="width:90px;">
+      <select id="nbDurationUnit" style="flex:1;">
+        <option value="day">Jour(s)</option>
+        <option value="week">Semaine(s)</option>
+        <option value="month" selected>Mois</option>
+        <option value="year">Année(s)</option>
+        <option value="unlimited">Illimitée</option>
+      </select>
+    </div>
+    <p class="hint">Ex: 1 jour pour une vente à la journée, ou "Illimitée".</p>
+    <div class="err" id="nbErr"></div>
+    <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end;">
+      <button class="btn-outline" id="nbCancel">Annuler</button>
+      <button class="btn-gold" id="nbConfirm">Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: renouveler la licence -->
+<div class="modal-bg" id="modalRenew">
+  <div class="modal">
+    <h3>Renouveler la licence</h3>
+    <p class="hint" id="renewBizLabel"></p>
+    <label>Nouvelle durée (à partir d'aujourd'hui)</label>
+    <div style="display:flex;gap:8px;">
+      <input id="renewDurationValue" type="number" min="1" step="1" value="1" style="width:90px;">
+      <select id="renewDurationUnit" style="flex:1;">
+        <option value="day">Jour(s)</option>
+        <option value="week">Semaine(s)</option>
+        <option value="month" selected>Mois</option>
+        <option value="year">Année(s)</option>
+        <option value="unlimited">Illimitée</option>
+      </select>
+    </div>
+    <div class="err" id="renewErr"></div>
+    <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end;">
+      <button class="btn-outline" id="renewCancel">Annuler</button>
+      <button class="btn-gold" id="renewConfirm">Renouveler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: résultat création / reset (affiche mot de passe une seule fois) -->
+<div class="modal-bg" id="modalSecret">
+  <div class="modal">
+    <h3 id="secretTitle">Identifiants générés</h3>
+    <p class="hint">⚠ Ce mot de passe ne sera plus jamais affiché. Communiquez-le au gérant par un canal sûr (appel, en personne), puis il devra le changer à sa première connexion.</p>
+    <div id="secretBody"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+      <button class="btn-gold" id="secretClose">J'ai noté, fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: code de déblocage hors-ligne -->
+<div class="modal-bg" id="modalOffline">
+  <div class="modal">
+    <h3>Code de déblocage hors-ligne</h3>
+    <p class="hint">Demandez au gérant, par téléphone, le code affiché sur son écran de verrouillage (ex: ESPGS-3-AB12CD), puis saisissez-le ici.</p>
+    <label>Code affiché chez le client</label>
+    <input id="offlineChallenge" placeholder="ESPGS-3-AB12CD">
+    <button class="btn-gold btn-sm" style="margin-top:12px;" id="offlineGenerate">Générer le code de déblocage</button>
+    <div id="offlineResult"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let API = "";
+let TOKEN = "";
+let businesses = [];
+
+function toast(msg, warn){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.className = "toast show" + (warn?" warn":"");
+  clearTimeout(t._h); t._h = setTimeout(()=>t.className="toast", warn?5000:3000);
+}
+
+async function api(path, opts={}){
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: {
+      "Content-Type":"application/json",
+      ...(TOKEN ? {Authorization:"Bearer "+TOKEN} : {}),
+      ...(opts.headers||{})
+    }
+  });
+  const body = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(body.error || ("Erreur " + res.status));
+  return body;
+}
+
+// ---- Vérification du serveur + premier démarrage sans terminal ---------
+document.getElementById("btnCheckServer").addEventListener("click", checkServer);
+
+async function checkServer(){
+  const msgBox = document.getElementById("checkServerMsg");
+  API = document.getElementById("serverUrl").value.trim().replace(/\/$/,"");
+  if(!API){ msgBox.textContent = "Renseignez d'abord l'adresse du serveur."; msgBox.style.color = "var(--red)"; return; }
+  msgBox.textContent = "Vérification en cours…"; msgBox.style.color = "var(--ink-dim)";
+  try{
+    const r = await api("/setup/status");
+    msgBox.textContent = "✓ Serveur joignable.";
+    msgBox.style.color = "var(--green)";
+    if(r.needsSetup){
+      document.getElementById("loginTitle").textContent = "Bienvenue — première configuration";
+      document.getElementById("loginHint").textContent = "Ce serveur n'a pas encore de compte administrateur.";
+      document.getElementById("loginFields").classList.add("hidden");
+      document.getElementById("setupFields").classList.remove("hidden");
+    } else {
+      document.getElementById("loginTitle").textContent = "Connexion administrateur";
+      document.getElementById("loginHint").textContent = "Accès réservé. Cette console permet de gérer toutes les entreprises clientes : ne la partagez jamais.";
+      document.getElementById("loginFields").classList.remove("hidden");
+      document.getElementById("setupFields").classList.add("hidden");
+    }
+  }catch(e){
+    msgBox.textContent = "✗ Serveur injoignable à cette adresse. Vérifiez qu'il est bien démarré, et l'adresse saisie.";
+    msgBox.style.color = "var(--red)";
+  }
+}
+// Tentative automatique au chargement de la page, avec l'adresse par défaut.
+checkServer();
+
+document.getElementById("btnSetup").addEventListener("click", async ()=>{
+  const errBox = document.getElementById("loginErr");
+  errBox.textContent = "";
+  API = document.getElementById("serverUrl").value.trim().replace(/\/$/,"");
+  const username = document.getElementById("setupUser").value.trim();
+  const password = document.getElementById("setupPass").value;
+  const password2 = document.getElementById("setupPass2").value;
+  if(!API || !username || !password){ errBox.textContent = "Tous les champs sont requis."; return; }
+  if(password.length < 8){ errBox.textContent = "Le mot de passe doit contenir au moins 8 caractères."; return; }
+  if(password !== password2){ errBox.textContent = "Les deux mots de passe ne correspondent pas."; return; }
+  try{
+    await api("/setup", {method:"POST", body: JSON.stringify({username, password})});
+    toast("Compte créé avec succès. Connexion...");
+    const r = await api("/auth/login", {method:"POST", body: JSON.stringify({username, password})});
+    TOKEN = r.accessToken;
+    document.getElementById("whoName").textContent = r.user.username;
+    document.getElementById("whoBox").classList.remove("hidden");
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("mainBox").classList.remove("hidden");
+    await loadAll();
+  }catch(e){ errBox.textContent = e.message; }
+});
+
+document.getElementById("btnLogin").addEventListener("click", async ()=>{
+  const errBox = document.getElementById("loginErr");
+  errBox.textContent = "";
+  API = document.getElementById("serverUrl").value.trim().replace(/\/$/,"");
+  const username = document.getElementById("loginUser").value.trim();
+  const password = document.getElementById("loginPass").value;
+  if(!API || !username || !password){ errBox.textContent = "Tous les champs sont requis."; return; }
+  try{
+    const r = await api("/auth/login", {method:"POST", body: JSON.stringify({username, password})});
+    if(r.user.role !== "mere"){ errBox.textContent = "Ce compte n'est pas un compte administrateur."; return; }
+    TOKEN = r.accessToken;
+    document.getElementById("whoName").textContent = r.user.username;
+    document.getElementById("whoBox").classList.remove("hidden");
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("mainBox").classList.remove("hidden");
+    await loadAll();
+  }catch(e){ errBox.textContent = e.message; }
+});
+
+document.getElementById("btnLogout").addEventListener("click", (e)=>{
+  e.preventDefault(); TOKEN=""; location.reload();
+});
+
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    document.querySelectorAll(".tabpage").forEach(p=>p.classList.add("hidden"));
+    tab.classList.add("active");
+    document.getElementById("tab-"+tab.dataset.tab).classList.remove("hidden");
+  });
+});
+
+async function loadAll(){
+  await loadBusinesses();
+  await loadSecurity();
+  await loadPending();
+  fillReportSelect();
+  loadReport();
+}
+
+function licenseBadge(b){
+  if(!b.license_expires_at){
+    return `<span class="pill unlimited">Illimitée</span>`;
+  }
+  const dateLabel = b.license_expires_at.slice(0,10);
+  if(b.licenseStatus === "expired"){
+    return `<span class="pill expired">Expirée le ${dateLabel}</span>`;
+  }
+  if(b.licenseStatus === "expiring_soon"){
+    return `<span class="pill expiring_soon">Expire le ${dateLabel}</span>`;
+  }
+  return `<span class="pill active">Jusqu'au ${dateLabel}</span>`;
+}
+
+async function loadBusinesses(){
+  const r = await api("/mother/businesses");
+  businesses = r.businesses;
+  const tbody = document.getElementById("bizTable");
+  tbody.innerHTML = businesses.map(b=>{
+    const alert = b.failed_logins_24h > 0;
+    return `<tr>
+      <td>${escapeHtml(b.name)}</td>
+      <td class="mono muted">${b.license_code}</td>
+      <td>${licenseBadge(b)}</td>
+      <td><span class="pill ${b.status}">${b.status==='active'?'Active':'Suspendue'}</span></td>
+      <td class="muted">${b.last_seen_at ? b.last_seen_at : 'Jamais connecté'}</td>
+      <td>${alert ? `<span class="pill alert">${b.failed_logins_24h} échec(s)</span>` : '<span class="muted">—</span>'}</td>
+      <td class="row-actions">
+        <button class="btn-outline btn-sm" onclick="openRenewModal(${b.id})">Renouveler licence</button>
+        <button class="btn-outline btn-sm" onclick="openOfflineModal(${b.id})">Déblocage hors-ligne</button>
+        <button class="btn-outline btn-sm" onclick="resetPassword(${b.id},'${escapeHtml(b.name)}')">Réinitialiser mot de passe</button>
+        <button class="btn-outline btn-sm" onclick="toggleStatus(${b.id}, '${b.status}')">${b.status==='active'?'Suspendre':'Réactiver'}</button>
+      </td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="7" class="muted">Aucune entreprise pour le moment.</td></tr>`;
+
+  const stats = document.getElementById("statGrid");
+  const total = businesses.length;
+  const active = businesses.filter(b=>b.status==='active').length;
+  const alerts = businesses.filter(b=>b.failed_logins_24h>0).length;
+  const events = businesses.reduce((s,b)=>s+b.events_24h,0);
+  stats.innerHTML = `
+    <div class="stat"><div class="num">${total}</div><div class="lbl">Entreprises</div></div>
+    <div class="stat"><div class="num">${active}</div><div class="lbl">Actives</div></div>
+    <div class="stat"><div class="num" style="color:${alerts?'var(--red)':'var(--ink)'}">${alerts}</div><div class="lbl">Avec alertes (24h)</div></div>
+    <div class="stat"><div class="num">${events}</div><div class="lbl">Événements (24h)</div></div>
+  `;
+}
+
+async function loadSecurity(){
+  const r = await api("/mother/security-log");
+  document.getElementById("secTable").innerHTML = r.events.map(e=>`
+    <tr>
+      <td class="muted mono">${e.created_at}</td>
+      <td>${escapeHtml(e.business_name)}</td>
+      <td>${labelForType(e.type)}</td>
+      <td class="muted mono">${escapeHtml((e.payload||'').slice(0,60))}</td>
+    </tr>
+  `).join("") || `<tr><td colspan="4" class="muted">Aucun événement.</td></tr>`;
+}
+
+function labelForType(t){
+  const map = {login_failed:"⚠ Connexion échouée", password_reset:"🔑 Mot de passe réinitialisé", password_change:"🔒 Mot de passe changé", lock:"🔒 Verrouillage", unlock:"🔓 Déverrouillage"};
+  return map[t] || t;
+}
+
+async function loadPending(){
+  const r = await api("/mother/reset-requests");
+  document.getElementById("pendingTable").innerHTML = r.requests.map(req=>`
+    <tr>
+      <td class="muted mono">${req.created_at}</td>
+      <td>${escapeHtml(req.business_name)}</td>
+      <td><button class="btn-gold btn-sm" onclick="resetPassword(${req.business_id}, '${escapeHtml(req.business_name)}')">Traiter</button></td>
+    </tr>
+  `).join("") || `<tr><td colspan="3" class="muted">Aucune demande en attente.</td></tr>`;
+}
+
+function fillReportSelect(){
+  const sel = document.getElementById("reportBizSelect");
+  sel.innerHTML = businesses.map(b=>`<option value="${b.id}">${escapeHtml(b.name)}</option>`).join("");
+}
+
+let currentPeriod = "daily";
+document.querySelectorAll(".period-switch button").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".period-switch button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    currentPeriod = btn.dataset.period;
+    loadReport();
+  });
+});
+document.getElementById("reportBizSelect").addEventListener("change", loadReport);
+
+async function loadReport(){
+  const bizId = document.getElementById("reportBizSelect").value;
+  const out = document.getElementById("reportOutput");
+  if(!bizId){ out.innerHTML = ""; return; }
+  try{
+    const r = await api(`/reports/${bizId}/${currentPeriod}`);
+    out.innerHTML = `
+      <div class="stat-grid" style="margin-top:16px;">
+        <div class="stat"><div class="num">${r.ventes.nombre}</div><div class="lbl">Ventes</div></div>
+        <div class="stat"><div class="num">${Number(r.ventes.montantTotal).toLocaleString('fr-FR')}</div><div class="lbl">Total (FCFA)</div></div>
+        <div class="stat"><div class="num">${r.mouvementsStock}</div><div class="lbl">Mvts de stock</div></div>
+        <div class="stat"><div class="num">${r.connexions.reussies} / ${r.connexions.echouees}</div><div class="lbl">Connexions OK / échouées</div></div>
+      </div>
+      <p class="hint" style="margin-top:10px;">Période : ${r.range.start} → ${r.range.end} (UTC)</p>
+    `;
+  }catch(e){ out.innerHTML = `<p class="err">${e.message}</p>`; }
+}
+
+// Désactive le champ "valeur" quand l'unité choisie est "Illimitée"
+// (évite d'envoyer une valeur incohérente, purement cosmétique côté UI ;
+// la validation réelle et faisant foi reste côté serveur).
+function wireDurationToggle(unitSelectId, valueInputId){
+  const unitSelect = document.getElementById(unitSelectId);
+  const valueInput = document.getElementById(valueInputId);
+  const sync = () => { valueInput.disabled = (unitSelect.value === "unlimited"); };
+  unitSelect.addEventListener("change", sync);
+  sync();
+}
+wireDurationToggle("nbDurationUnit", "nbDurationValue");
+wireDurationToggle("renewDurationUnit", "renewDurationValue");
+
+// ---- Nouvelle entreprise ----
+document.getElementById("btnNewBiz").addEventListener("click", ()=>{
+  document.getElementById("nbName").value = "";
+  document.getElementById("nbUser").value = "";
+  document.getElementById("nbDurationValue").value = "1";
+  document.getElementById("nbDurationUnit").value = "month";
+  document.getElementById("nbErr").textContent = "";
+  document.getElementById("modalNewBiz").classList.add("show");
+});
+document.getElementById("nbCancel").addEventListener("click", ()=>document.getElementById("modalNewBiz").classList.remove("show"));
+document.getElementById("nbConfirm").addEventListener("click", async ()=>{
+  const name = document.getElementById("nbName").value.trim();
+  const gerantUsername = document.getElementById("nbUser").value.trim();
+  const durationUnit = document.getElementById("nbDurationUnit").value;
+  const durationValue = document.getElementById("nbDurationValue").value;
+  const errBox = document.getElementById("nbErr");
+  if(!name || !gerantUsername){ errBox.textContent = "Tous les champs sont requis."; return; }
+  try{
+    const r = await api("/mother/businesses", {method:"POST", body: JSON.stringify({name, gerantUsername, durationUnit, durationValue})});
+    document.getElementById("modalNewBiz").classList.remove("show");
+    const expLabel = r.licenseExpiresAt ? `Valable jusqu'au ${r.licenseExpiresAt.slice(0,10)}` : "Licence illimitée";
+    showSecret("Nouvelle entreprise créée", `
+      <p><b>${escapeHtml(name)}</b></p>
+      <label>Code de licence</label><div class="copy-box">${r.licenseCode}</div>
+      <label>Durée de licence</label><div class="copy-box">${expLabel}</div>
+      <label>Identifiant gérant</label><div class="copy-box">${escapeHtml(r.gerantUsername)}</div>
+      <label>Mot de passe temporaire</label><div class="copy-box">${r.temporaryPassword}</div>
+      <label>Secret de récupération hors-ligne (à intégrer dans l'app livrée à CETTE entreprise, dans aucune autre)</label>
+      <div class="copy-box" style="font-size:11px;">${r.recoverySecret}</div>
+    `);
+    await loadBusinesses(); fillReportSelect();
+  }catch(e){ errBox.textContent = e.message; }
+});
+
+// ---- Renouveler la licence d'une entreprise existante ----
+let renewBizId = null;
+function openRenewModal(id){
+  renewBizId = id;
+  const b = businesses.find(x=>x.id===id);
+  document.getElementById("renewBizLabel").textContent = b ? `Entreprise : ${b.name}` : "";
+  document.getElementById("renewDurationValue").value = "1";
+  document.getElementById("renewDurationUnit").value = "month";
+  document.getElementById("renewErr").textContent = "";
+  document.getElementById("modalRenew").classList.add("show");
+}
+document.getElementById("renewCancel").addEventListener("click", ()=>document.getElementById("modalRenew").classList.remove("show"));
+document.getElementById("renewConfirm").addEventListener("click", async ()=>{
+  const durationUnit = document.getElementById("renewDurationUnit").value;
+  const durationValue = document.getElementById("renewDurationValue").value;
+  const errBox = document.getElementById("renewErr");
+  try{
+    const r = await api(`/mother/businesses/${renewBizId}/license`, {method:"PATCH", body: JSON.stringify({durationUnit, durationValue})});
+    document.getElementById("modalRenew").classList.remove("show");
+    toast(r.licenseExpiresAt ? `Licence renouvelée jusqu'au ${r.licenseExpiresAt.slice(0,10)}` : "Licence renouvelée (illimitée)");
+    await loadBusinesses();
+  }catch(e){ errBox.textContent = e.message; }
+});
+
+async function resetPassword(id, name){
+  if(!confirm(`Réinitialiser le mot de passe de "${name}" ? L'ancien mot de passe cessera immédiatement de fonctionner.`)) return;
+  try{
+    const r = await api(`/mother/businesses/${id}/reset-password`, {method:"POST"});
+    showSecret("Mot de passe réinitialisé", `
+      <p><b>${escapeHtml(name)}</b></p>
+      <label>Identifiant</label><div class="copy-box">${escapeHtml(r.username)}</div>
+      <label>Nouveau mot de passe temporaire</label><div class="copy-box">${r.temporaryPassword}</div>
+    `);
+    await loadPending();
+  }catch(e){ toast(e.message, true); }
+}
+
+async function toggleStatus(id, status){
+  const next = status === "active" ? "suspended" : "active";
+  try{
+    await api(`/mother/businesses/${id}/status`, {method:"PATCH", body: JSON.stringify({status: next})});
+    toast("Statut mis à jour.");
+    await loadBusinesses();
+  }catch(e){ toast(e.message, true); }
+}
+
+function showSecret(title, html){
+  document.getElementById("secretTitle").textContent = title;
+  document.getElementById("secretBody").innerHTML = html;
+  document.getElementById("modalSecret").classList.add("show");
+}
+document.getElementById("secretClose").addEventListener("click", ()=>document.getElementById("modalSecret").classList.remove("show"));
+
+// ---- Déblocage hors-ligne ----
+let offlineBizId = null;
+function openOfflineModal(id){
+  offlineBizId = id;
+  document.getElementById("offlineChallenge").value = "";
+  document.getElementById("offlineResult").innerHTML = "";
+  document.getElementById("modalOffline").classList.add("show");
+}
+document.getElementById("offlineGenerate").addEventListener("click", async ()=>{
+  const challenge = document.getElementById("offlineChallenge").value.trim();
+  if(!challenge) return;
+  try{
+    const r = await api(`/mother/businesses/${offlineBizId}/offline-unlock-code`, {method:"POST", body: JSON.stringify({challenge})});
+    document.getElementById("offlineResult").innerHTML = `
+      <label>Code à communiquer au gérant</label>
+      <div class="copy-box" style="font-size:18px;text-align:center;">${r.unlockCode}</div>
+      <p class="hint">Valable uniquement pour la journée du ${r.validForDay}.</p>
+    `;
+  }catch(e){ toast(e.message, true); }
+});
+document.querySelectorAll(".modal-bg").forEach(m=>{
+  m.addEventListener("click", (e)=>{ if(e.target === m) m.classList.remove("show"); });
+});
+
+function escapeHtml(s){
+  return String(s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+</script>
+</body>
+</html>
